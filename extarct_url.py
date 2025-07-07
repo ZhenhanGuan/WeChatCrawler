@@ -36,7 +36,7 @@ def init_dic():
     
 data = init_dic()
 
-comparison_date = datetime.strptime("2025-07-02", "%Y-%m")
+comparison_date = datetime.strptime("2025-07-02", "%Y-%m-%d")
 
 # def get_links(page, pub_name):
 #     time.sleep(5)
@@ -81,12 +81,12 @@ def get_links(page, pub_name):
         date_str = date_element_text[:10]
 
         try:
-            test_date = datetime.strptime(date_str, "%Y-%m")
+            test_date = datetime.strptime(date_str, "%Y-%m-%d")
         except Exception as e:
             print(f"解析日期失败: {date_str}, 跳过")
             continue
 
-        print(f"文章日期: {test_date}, 链接: {href_value}")
+        print(f"文章日期: {test_date.date()}, 链接: {href_value}")
 
         if test_date < comparison_date:
             print("遇到早于限定日期的文章，停止抓取")
@@ -95,7 +95,7 @@ def get_links(page, pub_name):
         if href_value not in data[pub_name]:
             data[pub_name].append(href_value)
             with jsonlines.open(file_path, mode='a') as writer:
-                writer.write({"pub_name": pub_name, "url": href_value, "pubulish_date": str(test_date)})
+                writer.write({"pubulish_date": str(test_date.date()), "pub_name": pub_name, "url": href_value })
 
         if len(data[pub_name]) >= 500:
             print("已抓够 500 篇文章，提前停止")
@@ -157,7 +157,7 @@ def run(playwright: Playwright, pub_name) -> None:
 
 
     page_count = 0
-    # count_path = f"./tmp/page_count_{pub_name}.txt"
+    count_path = f"./tmp/page_count_{pub_name}.txt"
     # if os.path.exists(count_path):
     #     with open(count_path, 'r') as f:
     #         page_count = int(f.read())
