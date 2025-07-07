@@ -25,8 +25,8 @@ with jsonlines.open(article_link_path, mode='r') as reader:
         article_link_list.append(obj)
 
 for article_link in article_link_list:
-    url = article_link["url"]
-    # url = "https://mp.weixin.qq.com/s/KcaiK4PjN0FbFAyZifLogg"
+    # url = article_link["url"]
+    url = "https://mp.weixin.qq.com/s/pJ3hH8CvF5cThACV3j7keQ"
     pub_name = article_link["pub_name"]
     pubulish_date = article_link["pubulish_date"]
 
@@ -140,27 +140,28 @@ for article_link in article_link_list:
     "video_urls": list(set(video_urls)),
     "image_count": len(set(image_urls)),
     "video_count": len(set(video_urls)),
-        }
+    }
 
-    # ========================================
-    # 保存 markdown 文件
-    # ========================================
+
     if status == "success":
+        print(f"✅ 爬取完成，状态：{status}")
+
+        # ========================================
+        # 保存 markdown 文件
+        # ========================================
         markdown_content = "\n".join(markdown_lines)
         with open(f"{article_path}/{article_uuid}_article_content.md", "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
-    # ========================================
-    # 写入 JSON 文件
-    # ========================================
+        print("已生成文章md文件")
+        # ========================================
+        # 写入 JSON 文件
+        # ========================================
+        with open(f"{article_path}/metadata.json", "a", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=4)
+        print("已生成元数据json文件")
 
-    with open(f"{article_path}/metadata.json", "a", encoding="utf-8") as f:
-        json.dump(metadata, f, ensure_ascii=False, indent=4)
-
-        print(f"✅ 爬取完成，状态：{status}")
-
-
-    if status == "success":
-        print("已生成文件")
     else:
-        print(f"错误信息：{error_message}")
+        with open(f"{article_path}/metadata.json", "a", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=4)
+        print(f"❌ 爬取失败，错误信息：{error_message}")

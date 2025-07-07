@@ -4,7 +4,7 @@ import json
 class WeixinArticleSpider(scrapy.Spider):
     name = "weixin_article"
     allowed_domains = ['mp.weixin.qq.com']
-    start_urls = ['https://mp.weixin.qq.com/s/J8qtGMAZGxJwgi_TYeISFg']
+    start_urls = ['https://mp.weixin.qq.com/s/pJ3hH8CvF5cThACV3j7keQ']
 
     def parse(self, response):
         title = response.xpath('normalize-space(//h1[@class="rich_media_title" and @id="activity-name"])').get(default='')
@@ -12,6 +12,7 @@ class WeixinArticleSpider(scrapy.Spider):
 
         # 正文
         texts = response.xpath('//div[@id="js_content"]//text()').getall()
+        print(texts)
         visible_text = ' '.join([t.strip() for t in texts if t.strip()])
 
         # 图片

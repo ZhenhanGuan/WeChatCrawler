@@ -163,8 +163,6 @@ def run(playwright: Playwright, pub_name) -> None:
     #         page_count = int(f.read())
 
 
-    print("8888888888888page:", page_count)
-
     if page_count > 0:
         page1.fill('input[type="number"]', str(page_count))
         page1.get_by_role("link", name="跳转").click()
@@ -176,20 +174,17 @@ def run(playwright: Playwright, pub_name) -> None:
         page_count += 1
         this_count += 1
         if this_count > 10:
-            print(12)
             record_state(count_path, page_count)
             error_flag = True
             break
         print(f"公众号 {pub_name} 第{page_count}页")
         flag = get_links(page1, pub_name)
         if flag is None:
-            print(13)
             record_state(count_path, page_count)
             error_flag = None
             break
-        
+    
         if not flag:
-            print(14)
             record_state(count_path, page_count)
             error_flag = True
             break
@@ -197,7 +192,6 @@ def run(playwright: Playwright, pub_name) -> None:
         next_button = page1.get_by_role("link", name="下一页")
 
         if (next_button.count() == 0):
-            print(15)
             record_state(count_path, page_count)
             error_flag = True
             break
