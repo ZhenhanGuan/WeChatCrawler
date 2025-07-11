@@ -4,13 +4,13 @@ from datetime import datetime
 import json, jsonlines
 import os
 class WeChatArticleUrlCrawler:
-    def __init__(self, keywords=None, article_path=None, comparison_date_str="2025-07-02"):
-        self.keywords = keywords 
+    def __init__(self, wechat_official_accounts=None, article_path=None, start_date_str="2025-07-02"):
+        self.keywords = wechat_official_accounts 
         self.article_path = article_path
         self.file_path = os.path.join(self.article_path, "article_links.jsonl") 
         print(self.file_path)
         # self.file_path = "/Users/zhenhan_guan/Desktop/CodeBase/FinancialRAG/article_links.jsonl"
-        self.comparison_date = datetime.strptime(comparison_date_str, "%Y-%m-%d")
+        self.comparison_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         self.data = self.init_dic()
         self.cookies = self.get_cookies()
         self.check_folder()
@@ -184,5 +184,5 @@ if __name__ == "__main__":
     keywords=["机器之心", "上海科技大学", "PaperWeekly"]
     file_path="/Users/zhenhan_guan/Desktop/CodeBase/FinancialRAG/article_links.jsonl"
     comparison_date_str="2025-07-02"
-    crawler = WeChatArticleUrlCrawler(keywords=keywords, file_path=file_path, comparison_date_str=comparison_date_str)
+    crawler = WeChatArticleUrlCrawler(wechat_official_accounts=keywords, article_path=file_path, comparison_date_str=comparison_date_str)
     crawler.get_url_from_wechat()
