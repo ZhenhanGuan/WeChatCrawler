@@ -16,3 +16,10 @@ wechat_article/
 website_crawler/tmp/
 
 tmp/
+
+.env
+
+*.png
+*.jpg
+
+uv.lock

@@ -2,81 +2,35 @@ import requests
 from datetime import datetime, timedelta
 import os
 
-def upload_document(authorization_token, file_path_list: list, kb_name, kb_id, url, run=1, is_parse=True):
-    doc_id_list = []
 
-    #上传文件
-    for file_path in file_path_list:
-        url = url
-        headers = {
-            "Authorization": authorization_token
-            # "Content-Type: multipart/form-data"
-        }
-        files = {
-            "file": open(file_path, "rb")
-        }
-        data = {
-            "kb_name": kb_name,
-            "kb_id": kb_id,
-            # "parser_id": "可选，指定解析器",
-            "run": "1"  # 可选，立即解析
-        }
+import requests
+import os
 
-        response = requests.post(url, headers=headers, files=files, data=data)
-        doc_id = response.json()["data"][0]["id"]
-        doc_id_list.append(doc_id)
-    
-    # 解析
-    if is_parse:
-        url = "http://127.0.0.1/v1/document/run"
-        parse_document(authorization_token, kb_id, url, doc_id_list, run)
-    
+def download_images(url_list, output_dir="images"):
+    os.makedirs(output_dir, exist_ok=True)
 
-    try:
-        data = response.json()
-    except ValueError:
-        print("Response is not JSON!")
-        data = response.text
-    print(data)
+    for idx, url in enumerate(url_list, start=1):
+        try:
+            response = requests.get(url, stream=True, timeout=10)
+            response.raise_for_status()
 
+            # 自动判断扩展名（默认为 .jpg）
+            # ext = os.path.splitext(url.split("?")[0])[1]
+            # if ext.lower() not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+            #     ext = '.png'
 
+            ext = ".png"
+            filename = f"{idx:03d}{ext}" 
+            save_path = os.path.join(output_dir, filename)
 
-def parse_document(authorization_token, kb_id, url, doc_id_list: list, run=1):
-    url = url
-    headers = {
-        "Authorization": authorization_token,
-        "Content-Type": "application/json"
-    }
-    data = {
-        "doc_ids": doc_id_list,
-        "run": run,
-        "kb_id": kb_id,
+            with open(save_path, "wb") as f:
+                for chunk in response.iter_content(1024):
+                    f.write(chunk)
 
-    }
+            print(f"✅ [{idx}] 下载成功: {save_path}")
 
-    response = requests.post(url, headers=headers, json=data)
-
-    try:
-        data = response.json()
-    except ValueError:
-        print("Response is not JSON!")
-        data = response.text
-    print(data)
-
-if __name__ == "__main__":
-    
-    authorization_token = "IjcwMTRlODgwNWJjNDExZjA4ZjAwM2U0ODRmOWZmZGE0Ig.aGy6Ag.AAqC3q8vv362lteVcZUHVqDVzkc"
-    url = "http://127.0.0.1/v1/document/upload"
-    
-    file_path_list = ["/Users/zhenhan_guan/Desktop/CodeBase/FinancialRAG/wechat_article/机器之心/2025-07-03/08ea4e26-32ca-4dae-8e90-1a05a19cf4fa_article_content.md",
-                      "/Users/zhenhan_guan/Desktop/CodeBase/FinancialRAG/wechat_article/机器之心/2025-07-03/213fdabc-2094-4893-a97e-9c804f37f8bc_article_content.md",
-                        "/Users/zhenhan_guan/Desktop/CodeBase/FinancialRAG/wechat_article/机器之心/2025-07-03/a4531515-573c-4f87-a7dc-904e0f558315_article_content.md"]
-    kb_id = "d0b23dea5bc511f0ad223e484f9ffda4"
-    kb_name = "FinancialWechat"
-
-    
-    upload_document(authorization_token, file_path_list, kb_name, kb_id, url, is_parse=True)
-
+        except Exception as e:
+            print(f"❌ [{idx}] 下载失败: {url} | 原因: {e}")
 
 def get_file_path_list(wechat_official_accounts, article_path, start_date_str):
 
@@ -113,3 +67,15 @@ def get_file_path_list(wechat_official_accounts, article_path, start_date_str):
                 print(f"未找到公众号“{account}”在“{date}”的文章,请确认公众号这天是否有文章！")
        
     return metadata_path_list
+
+# 示例用法
+if __name__ == "__main__":
+    url_list = [
+        "https://mmbiz.qpic.cn/sz_mmbiz_png/KmXPKA19gWibb9end79VK2aSOBYuTvo2WvvNDE2uh245ua5QYbdDaODiaxhw83WkNYdkFQp0moDXGUaS4QxFicfew/640?wx_fmt=png&from=appmsg",
+        "https://mmbiz.qpic.cn/sz_mmbiz_png/KmXPKA19gWibb9end79VK2aSOBYuTvo2WvvNDE2uh245ua5QYbdDaODiaxhw83WkNYdkFQp0moDXGUaS4QxFicfew/640?wx_fmt=png&from=appmsg",
+        "https://mmbiz.qpic.cn/sz_mmbiz_png/KmXPKA19gWibb9end79VK2aSOBYuTvo2WvvNDE2uh245ua5QYbdDaODiaxhw83WkNYdkFQp0moDXGUaS4QxFicfew/640?wx_fmt=png&from=appmsg"
+    ]
+
+    download_images(url_list)
+
+

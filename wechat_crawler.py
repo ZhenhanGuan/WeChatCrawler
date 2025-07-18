@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import uuid
 import jsonlines
+from utils import download_images
 
 class WeChatArticleContentCrawler:
     def __init__(self, base_wechat_article_path):
@@ -46,11 +47,13 @@ class WeChatArticleContentCrawler:
         markdown_lines = [f"# {title}\n"]
         image_urls = []
         video_urls = []
+        text_lines = []
         for child in content_div.contents:
             if isinstance(child, NavigableString):
                 text = child.strip()
                 if text:
                     markdown_lines.append(text + "\n")
+                    text_lines.append(text + "\n")
             elif isinstance(child, Tag):
                 if child.name == "img":
                     img_url = child.get("data-src")
@@ -66,6 +69,7 @@ class WeChatArticleContentCrawler:
                     text = child.get_text(strip=True)
                     if text:
                         markdown_lines.append(text + "\n")
+                        text_lines.append(text + "\n")
                     img_tags = child.find_all("img")
                     for img_tag in img_tags:
                         img_url = img_tag.get("data-src")
@@ -78,21 +82,28 @@ class WeChatArticleContentCrawler:
                         if video_url:
                             video_urls.append(video_url)
                             markdown_lines.append(f"[视频链接]({video_url})\n")
-        return title, markdown_lines, image_urls, video_urls
+            
+        return title, markdown_lines, image_urls, video_urls, text_lines
 
-    def _save_article(self, pub_name, pubulish_date, article_uuid, markdown_lines, metadata):
-        article_path = os.path.join(self.base_wechat_article_path, f"{pub_name}/{pubulish_date}")
-        if not os.path.exists(article_path):
-            os.makedirs(article_path)
+    def _save_article(self, index, markdown_lines, metadata):
+        # article_path = os.path.join(self.base_wechat_article_path, pub_name)
+        # if not os.path.exists(self.base_wechat_article_path):
+        #     os.makedirs(self.base_wechat_article_path)
         markdown_content = "\n".join(markdown_lines)
-        with open(f"{article_path}/{article_uuid}_article_content.md", "w", encoding="utf-8") as f:
+        file_dir_path = os.path.join(self.base_wechat_article_path, str(index))
+        if not os.path.exists(file_dir_path):
+            os.makedirs(file_dir_path)
+
+        article_url = os.path.join(file_dir_path, "raw_article_content.md")
+        with open(article_url, "w", encoding="utf-8") as f:
             f.write(markdown_content)
             
-        with jsonlines.open(f"{article_path}/metadata.jsonl", "a") as writer:
+        with jsonlines.open(f"{self.base_wechat_article_path}/article_metadata.jsonl", "a") as writer:
             # json.dump(metadata, f, ensure_ascii=False, indent=4)
             writer.write(metadata)
 
     def crawl_content_from_url(self):
+        index = 0
         for article_link in self.article_link_list:
             url = article_link["url"]
             pub_name = article_link["pub_name"]
@@ -112,7 +123,7 @@ class WeChatArticleContentCrawler:
                     run_times += 1
                     print(f"🔄 尝试第 {run_times} 次")
                     html = self._scrape_article(url)
-                    title, markdown_lines, image_urls, video_urls = self._parse_article(html)
+                    title, markdown_lines, image_urls, video_urls, text_lines = self._parse_article(html)
                     status = "success"
                     error_message = ""
                 except Exception as e:
@@ -120,6 +131,7 @@ class WeChatArticleContentCrawler:
                     error_message = str(e)
             article_uuid = str(uuid.uuid4())
             metadata = {
+                "index": index,
                 "uuid" : article_uuid,
                 "url": url,
                 "scraped_at": scrape_time,
@@ -130,9 +142,13 @@ class WeChatArticleContentCrawler:
                 "video_urls": list(set(video_urls)),
                 "image_count": len(set(image_urls)),
                 "video_count": len(set(video_urls)),
+                "text_lines": text_lines
             }
-            self._save_article(pub_name, pubulish_date, article_uuid, markdown_lines, metadata)
+
+            
             if status == "success":
+                self._save_article(index, markdown_lines, metadata)
+                index += 1
                 print(f"✅ 爬取完成，状态：{status}")
                 print("已生成文章md文件")
                 print("已生成元数据json文件")
